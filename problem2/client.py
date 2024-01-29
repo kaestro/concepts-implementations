@@ -1,44 +1,36 @@
 # client.py
 import socket
 import os
-import re
+import pickle
+import time
+import logging
+
+logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
 def client_program():
     host = socket.gethostname()  # 서버의 호스트 이름을 가져옵니다.
-    port = 12345  # 서버와 동일한 포트를 사용합니다.
+    port = 12345
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # socket 객체를 생성합니다.
     client_socket.connect((host, port))  # 서버에 연결을 요청합니다.
+    logging.info('Connected to the server.')
 
-    while True:
-        data = client_socket.recv(1024).decode()  # 서버로부터 메시지를 받습니다.
+    directory_to_watch = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dummy_client_folder')
 
-        # 현재 file을 받고, size 메시지를 바로 받는다 가정해서
-        # filename이 실제 파일을 받는 루틴과 다른 곳에서 처리되고 있는
-        # 문제가 있습니다.
-        if data.startswith('File '):
-            filename = data.split(' ')[1]
-            print(f'Received {data}')
-        elif data.startswith('Size '):
-            filesize = int(data.split(' ')[1])
-            filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dummy_client_folder', filename)
+    try:
+        while True:
+            client_files = {file: os.stat(os.path.join(directory_to_watch, file)).st_mtime for file in os.listdir(directory_to_watch)}  # 클라이언트의 파일들과 그들의 최종 수정 시간을 저장하는 해시 테이블
+            client_socket.send(pickle.dumps(client_files))  # 해시 테이블을 직렬화하여 서버에 전송합니다.
+            logging.info('Sent the file metadata to the server.')
 
-            with open(filepath, 'wb') as file_to_write:
-                bytes_received = 0
-                while bytes_received < filesize:
-                    bytes_to_read = min(filesize - bytes_received, 1024)
-                    file_data = client_socket.recv(bytes_to_read)
-                    file_to_write.write(file_data)
-                    bytes_received += len(file_data)
+            for file, mtime in client_files.items():
+                with open(os.path.join(directory_to_watch, file), 'rb') as f:  # 파일을 열어서
+                    client_socket.send(f.read())  # 데이터를 서버에 전송합니다.
+                logging.info(f'Sent the file {file} to the server.')
 
-            print(f'{filename} has been updated.')
-        elif data == 'keep-alive':
-            print('Received keep-alive.')
-        
-        else:
-            print(f'Received {data}')
-
-    client_socket.close()  # 소켓을 닫습니다.
+            time.sleep(10)  # 10초 동안 대기합니다.
+    finally:
+        client_socket.close()  # 연결을 닫습니다.
 
 if __name__ == '__main__':
     client_program()
