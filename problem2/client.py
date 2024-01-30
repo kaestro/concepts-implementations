@@ -4,12 +4,23 @@ import os
 import pickle
 import time
 import logging
+import configparser
 
 logging.basicConfig(filename='client.log', level=logging.INFO, format='%(asctime)s - %(message)s')
 
+def get_host_port():
+    # ConfigParser 객체를 생성합니다.
+    config = configparser.ConfigParser()
+    config.read('.client_config')
+
+    # 설정 파일에서 호스트와 포트 읽어오기
+    host = config.get('DEFAULT', 'Host')
+    port = config.getint('DEFAULT', 'Port')
+
+    return host, port
+
 def client_program():
-    host = socket.gethostname()  # 서버의 호스트 이름을 가져옵니다.
-    port = 12345
+    host, port = get_host_port()
 
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # socket 객체를 생성합니다.
     client_socket.connect((host, port))  # 서버에 연결을 요청합니다.
