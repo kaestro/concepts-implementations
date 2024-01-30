@@ -32,6 +32,8 @@ def client_program():
 
     directory_to_watch = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dummy_client_folder')
 
+    prev_client_files = {}  # 이전에 서버에 전송한 클라이언트의 파일들과 그들의 최종 수정 시간을 저장하는 해시 테이블
+
     try:
         while True:
             try:
@@ -40,14 +42,16 @@ def client_program():
                 logging.error(f'Failed to get the file metadata: {e}')
                 break
 
+            changed_files = {file: mtime for file, mtime in client_files.items() if file not in prev_client_files or mtime != prev_client_files.get(file)}  # 파일이 추가/변경되었는지 확인
+
             try:
-                client_socket.send(pickle.dumps(client_files))  # 해시 테이블을 직렬화하여 서버에 전송합니다.
-                logging.info('Sent the file metadata to the server.')
+                client_socket.send(pickle.dumps(changed_files))  # 해시 테이블을 직렬화하여 서버에 전송합니다.
+                logging.info('Sent the file metadata of changed files to the server.')
             except socket.error as e:
-                logging.error(f'Failed to send the file metadata to the server: {e}')
+                logging.error(f'Failed to send the metadata of changed files to the server: {e}')
                 break
 
-            for file, mtime in client_files.items():
+            for file, mtime in changed_files.items():
                 try:
                     with open(os.path.join(directory_to_watch, file), 'rb') as f:  # 파일을 열어서
                         client_socket.send(f.read())  # 데이터를 서버에 전송합니다.
@@ -56,6 +60,8 @@ def client_program():
                     continue
 
                 logging.info(f'Sent the file {file} to the server.')
+            
+            prev_client_files = client_files  # 클라이언트의 파일들과 그들의 최종 수정 시간을 저장하는 해시 테이블을 업데이트합니다.
 
             if not client_socket.recv(1024):
                 logging.info('The server has closed the connection.')
