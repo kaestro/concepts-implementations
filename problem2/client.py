@@ -38,10 +38,14 @@ def client_program():
                 client_files = {file: os.stat(os.path.join(directory_to_watch, file)).st_mtime for file in os.listdir(directory_to_watch)}  # 클라이언트의 파일들과 그들의 최종 수정 시간을 저장하는 해시 테이블
             except OSError as e:
                 logging.error(f'Failed to get the file metadata: {e}')
-                continue
+                break
 
-            client_socket.send(pickle.dumps(client_files))  # 해시 테이블을 직렬화하여 서버에 전송합니다.
-            logging.info('Sent the file metadata to the server.')
+            try:
+                client_socket.send(pickle.dumps(client_files))  # 해시 테이블을 직렬화하여 서버에 전송합니다.
+                logging.info('Sent the file metadata to the server.')
+            except socket.error as e:
+                logging.error(f'Failed to send the file metadata to the server: {e}')
+                break
 
             for file, mtime in client_files.items():
                 try:
@@ -52,6 +56,10 @@ def client_program():
                     continue
 
                 logging.info(f'Sent the file {file} to the server.')
+
+            if not client_socket.recv(1024):
+                logging.info('The server has closed the connection.')
+                break
 
             time.sleep(10)  # 10초 동안 대기합니다.
     finally:
