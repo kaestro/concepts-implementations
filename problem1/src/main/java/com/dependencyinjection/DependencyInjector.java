@@ -1,7 +1,7 @@
-package main.java.com.dependencyinjection;
+package com.dependencyinjection;
 
-import main.java.com.dependencyinjection.Interfaces.DependencyController;
-import main.java.com.dependencyinjection.Interfaces.DependencyLifeCycleManager;
+import com.dependencyinjection.Interfaces.DependencyController;
+import com.dependencyinjection.Interfaces.DependencyLifeCycleManager;
 
 import java.util.HashMap;
 import java.util.Map;

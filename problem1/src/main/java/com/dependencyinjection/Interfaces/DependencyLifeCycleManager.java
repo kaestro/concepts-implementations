@@ -1,4 +1,4 @@
-package main.java.com.dependencyinjection.Interfaces;
+package com.dependencyinjection.Interfaces;
 
 /**
  * 이 인터페이스는 의존성의 생명주기를 관리하는 메서드를 정의합니다.

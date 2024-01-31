@@ -1,4 +1,4 @@
-package main.java.com.dependencyinjection.Interfaces;
+package com.dependencyinjection.Interfaces;
 
 import java.util.Map;
 
