@@ -1,3 +1,9 @@
-# inspien
+# Concepts-implementations
 
-인스피언 채용과제 레포지토리
+## problem 1
+
+* IOC(Inversion of Control), DI(Dependency Injection) 구현
+
+## problem 2
+
+* 파일 백업 서버/클라이언트 구현
